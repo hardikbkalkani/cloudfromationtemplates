@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create a Virtual Private Cloud (VPC) and an EC2 instance
+
+Resources:
+  MyVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: MyVPC
+
+  MyInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+
+  AttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId:
+        Ref: MyVPC
+      InternetGatewayId:
+        Ref: MyInternetGateway
+
+  MySubnet:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId:
+        Ref: MyVPC
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: us-east-1a
+
+  MySecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access
+      VpcId:
+        Ref: MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+
+  MyEC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0c55b159cbfafe1f0  # Amazon Linux 2 AMI
+      KeyName: my-key-pair
+      SubnetId:
+        Ref: MySubnet
+      SecurityGroupIds:
+        - Ref: MySecurityGroup
+
+Outputs:
+  VpcId:
+    Description: The ID of the VPC
+    Value:
+      Ref: MyVPC
+
+  InstanceId:
+    Description: The ID of the EC2 instance
+    Value:
+      Ref: MyEC2Instance
+      
+# In this extended template:
+
+# We've added the MySubnet resource of type AWS::EC2::Subnet to create a subnet within the VPC. The subnet has a CIDR block of 10.0.0.0/24 and is associated with the us-east-1a availability zone.
+# The MySecurityGroup resource creates a security group that allows incoming SSH traffic (port 22) from any source IP address (0.0.0.0/0).
+# The MyEC2Instance resource creates an EC2 instance with the specified properties, including the instance type, Amazon Machine Image (AMI), key pair name (my-key-pair), subnet, and security group.
+# Please note that you should replace the ImageId and KeyName values with appropriate values for your region and key pair.
+
+# This template creates a VPC, an Internet Gateway, a subnet, a security group, and an EC2 instance. The EC2 instance is launched in the specified subnet and is accessible via SSH from any source IP address.
